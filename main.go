@@ -13,11 +13,23 @@ import (
 
 var db = make(map[string]string)
 
+func addXuRoutes(rg *gin.RouterGroup) {
+	xu := rg.Group("xu")
+	xu.GET("/comments", func(c *gin.Context) {
+		c.JSON(http.StatusOK, "users comments")
+	})
+	xu.GET("/pictures", func(c *gin.Context) {
+		c.JSON(http.StatusOK, "users pictures")
+	})
+}
+
 func setupRouter() *gin.Engine {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
 	r := gin.Default()
 	r.Use(favicon.New("./favicon.ico"))
+
+	addXuRoutes(r.Group("v1"))
 
 	// Ping test
 	r.GET("/ping", func(c *gin.Context) {
@@ -36,7 +48,7 @@ func setupRouter() *gin.Engine {
 	})
 
 	// Authorized group (uses gin.BasicAuth middleware)
-	authorized := r.Group("/", gin.BasicAuth(gin.Accounts{
+	authorized := r.Group("/a", gin.BasicAuth(gin.Accounts{
 		"foo":  "bar", // user:foo password:bar
 		"manu": "123", // user:manu password:123
 	}))
@@ -60,6 +72,12 @@ func setupRouter() *gin.Engine {
 			db[user] = json.Value
 			c.JSON(http.StatusOK, gin.H{"status": "ok"})
 		}
+	})
+	authorized.GET("comments", func(c *gin.Context) {
+		c.JSON(http.StatusOK, "users comments")
+	})
+	authorized.GET("pictures", func(c *gin.Context) {
+		c.JSON(http.StatusOK, "users pictures")
 	})
 
 	return r
