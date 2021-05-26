@@ -5,23 +5,19 @@
 package main
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/thinkerou/favicon"
+	"log"
 	"net/http"
 )
 
 var db = make(map[string]string)
 
-func main() {
-	r := setupRouter()
-	// Listen and Server in 0.0.0.0:8080
-	fmt.Println(r.Run(":8080"))
-}
-
 func setupRouter() *gin.Engine {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
 	r := gin.Default()
+	r.Use(favicon.New("./favicon.ico"))
 
 	// Ping test
 	r.GET("/ping", func(c *gin.Context) {
@@ -67,4 +63,10 @@ func setupRouter() *gin.Engine {
 	})
 
 	return r
+}
+
+func main() {
+	r := setupRouter()
+	// Listen and Server in 0.0.0.0:8080
+	log.Fatal(r.Run(":8080"))
 }
