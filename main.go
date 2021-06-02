@@ -5,6 +5,7 @@
 package main
 
 import (
+	"fmt"
 	_ "github.com/Achillesxu/ginXushy/docs"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -135,6 +136,20 @@ func setupRouter() *gin.Engine {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"status": "you are logged in"})
+	})
+
+	// upload single file
+	r.POST("/upload_single", func(c *gin.Context) {
+		file, _ := c.FormFile("file")
+		log.Println(file.Filename)
+		// Upload the file to specific dst.
+		err := c.SaveUploadedFile(file, "single.txt")
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"status": fmt.Sprintf("'%s' uploaded!", file.Filename)})
+
 	})
 
 	return r
