@@ -5,7 +5,10 @@
 package main
 
 import (
+	_ "github.com/Achillesxu/ginXushy/docs"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/thinkerou/favicon"
 	"log"
 	"net/http"
@@ -29,6 +32,20 @@ func addXuRoutes(rg *gin.RouterGroup) {
 	})
 }
 
+// @title Swagger Example API
+// @version 1.0
+// @description This is a sample server Petstore server.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host petstore.swagger.io
+// @BasePath /v2
 func setupRouter() *gin.Engine {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
@@ -36,6 +53,9 @@ func setupRouter() *gin.Engine {
 	r.Use(favicon.New("./favicon.ico"))
 
 	addXuRoutes(r.Group("v1"))
+
+	url := ginSwagger.URL("http://localhost:8080/swagger/doc.json") // The url pointing to API definition
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 
 	// Ping test
 	r.GET("/ping", func(c *gin.Context) {
