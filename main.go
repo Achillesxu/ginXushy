@@ -8,11 +8,14 @@ import (
 	"fmt"
 	_ "github.com/Achillesxu/ginXushy/docs"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/thinkerou/favicon"
 	"log"
 	"net/http"
+	"time"
 )
 
 var db = make(map[string]string)
@@ -23,6 +26,23 @@ type Login struct {
 	Password string `form:"password" json:"password" xml:"password" binding:"required"`
 }
 
+// Booking contains binded and validated data.
+type Booking struct {
+	CheckIn  time.Time `form:"check_in" binding:"required,bookableDate" time_format:"2006-01-02"`
+	CheckOut time.Time `form:"check_out" binding:"required,gtfield=CheckIn" time_format:"2006-01-02"`
+}
+
+var bookableDate = func(fl validator.FieldLevel) bool {
+	date, ok := fl.Field().Interface().(time.Time)
+	if ok {
+		today := time.Now()
+		if today.After(date) {
+			return false
+		}
+	}
+	return true
+}
+
 func addXuRoutes(rg *gin.RouterGroup) {
 	xu := rg.Group("xu")
 	xu.GET("/comments", func(c *gin.Context) {
@@ -31,6 +51,15 @@ func addXuRoutes(rg *gin.RouterGroup) {
 	xu.GET("/pictures", func(c *gin.Context) {
 		c.JSON(http.StatusOK, "users pictures")
 	})
+}
+
+func getBookable(c *gin.Context) {
+	var b Booking
+	if err := c.ShouldBindWith(&b, binding.Query); err == nil {
+		c.JSON(http.StatusOK, gin.H{"message": "Booking dates are valid!"})
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
 }
 
 // @title Swagger Example API
@@ -52,6 +81,13 @@ func setupRouter() *gin.Engine {
 	// gin.DisableConsoleColor()
 	r := gin.Default()
 	r.Use(favicon.New("./favicon.ico"))
+
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		err := v.RegisterValidation("bookableDate", bookableDate)
+		if err != nil {
+			return nil
+		}
+	}
 
 	addXuRoutes(r.Group("v1"))
 
@@ -150,6 +186,15 @@ func setupRouter() *gin.Engine {
 		}
 		c.JSON(http.StatusOK, gin.H{"status": fmt.Sprintf("'%s' uploaded!", file.Filename)})
 
+	})
+	// Custom Validators
+	r.GET("/bookable", getBookable)
+
+	r.GET("/someJSON", func(c *gin.Context) {
+		names := []string{"lena", "austin", "foo"}
+
+		// Will output  :   while(1);["lena","austin","foo"]
+		c.SecureJSON(http.StatusOK, names)
 	})
 
 	return r
